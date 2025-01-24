@@ -1,6 +1,5 @@
 import os
 import subprocess
-import curses
 
 def run_command(command):
     """运行 shell 命令并返回其输出。"""
@@ -33,162 +32,92 @@ def initialize_iptables():
     ]
     for cmd in commands:
         run_command(cmd)
+    print("iptables 初始化完成！")
 
-def add_iptables_rule(rule):
+def add_iptables_rule():
     """添加一条 iptables 规则。"""
+    rule = input("请输入 iptables 规则：")
     run_command(f"iptables {rule}")
+    print("规则已添加！")
 
 def save_iptables():
     """保存 iptables 规则。"""
     run_command("/iptables_rule/unlock_iptables_edit")
     run_command("iptables-save > /iptables_rule/iptables_acl")
     run_command("/iptables_rule/lock_iptables_edit")
+    print("规则已保存！")
 
 def configure_firewall():
     """重新加载防火墙规则。"""
     run_command("firewall-cmd --reload")
+    print("防火墙规则已重新加载！")
 
 def view_policies():
     """查看当前生效的防火墙或 iptables 策略。"""
     if check_firewall_status():
-        return run_command("firewall-cmd --list-all")
+        print(run_command("firewall-cmd --list-all"))
     else:
-        return run_command("iptables -L -n")
+        print(run_command("iptables -L -n"))
 
-def iptables_menu(stdscr):
-    """显示 iptables 菜单。"""
-    curses.curs_set(0)
-    current_row = 0
-    menu = [
-        "初始化 iptables",
-        "添加 iptables 规则",
-        "保存 iptables 规则",
-        "返回主菜单",
-    ]
-
+def iptables_menu():
+    """iptables 操作菜单。"""
     while True:
-        stdscr.clear()
-        stdscr.addstr(0, 0, "iptables 控制面板", curses.A_BOLD)
-        for idx, row in enumerate(menu):
-            x = 0
-            y = idx + 1
-            if idx == current_row:
-                stdscr.addstr(y, x, row, curses.color_pair(1))
-            else:
-                stdscr.addstr(y, x, row)
+        print("\n=== iptables 控制面板 ===")
+        print("1. 初始化 iptables")
+        print("2. 添加 iptables 规则")
+        print("3. 保存 iptables 规则")
+        print("4. 返回主菜单")
+        choice = input("请选择操作：")
+        if choice == "1":
+            initialize_iptables()
+        elif choice == "2":
+            add_iptables_rule()
+        elif choice == "3":
+            save_iptables()
+        elif choice == "4":
+            break
+        else:
+            print("无效的选择，请重试！")
 
-        key = stdscr.getch()
-
-        if key == curses.KEY_UP and current_row > 0:
-            current_row -= 1
-        elif key == curses.KEY_DOWN and current_row < len(menu) - 1:
-            current_row += 1
-        elif key == curses.KEY_ENTER or key in [10, 13]:
-            if current_row == len(menu) - 1:  # 返回主菜单
-                break
-            elif current_row == 0:  # 初始化 iptables
-                initialize_iptables()
-            elif current_row == 1:  # 添加 iptables 规则
-                stdscr.clear()
-                stdscr.addstr(0, 0, "请输入 iptables 规则:")
-                curses.echo()
-                rule = stdscr.getstr(1, 0).decode("utf-8")
-                add_iptables_rule(rule)
-                curses.noecho()
-            elif current_row == 2:  # 保存 iptables 规则
-                save_iptables()
-
-        stdscr.refresh()
-
-def firewall_menu(stdscr):
-    """显示 firewall 菜单。"""
-    curses.curs_set(0)
-    current_row = 0
-    menu = [
-        "配置防火墙",
-        "查看防火墙策略",
-        "返回主菜单",
-    ]
-
+def firewall_menu():
+    """firewall 操作菜单。"""
     while True:
-        stdscr.clear()
-        stdscr.addstr(0, 0, "firewall 控制面板", curses.A_BOLD)
-        for idx, row in enumerate(menu):
-            x = 0
-            y = idx + 1
-            if idx == current_row:
-                stdscr.addstr(y, x, row, curses.color_pair(1))
-            else:
-                stdscr.addstr(y, x, row)
+        print("\n=== firewall 控制面板 ===")
+        print("1. 配置防火墙")
+        print("2. 查看防火墙策略")
+        print("3. 返回主菜单")
+        choice = input("请选择操作：")
+        if choice == "1":
+            configure_firewall()
+        elif choice == "2":
+            view_policies()
+        elif choice == "3":
+            break
+        else:
+            print("无效的选择，请重试！")
 
-        key = stdscr.getch()
-
-        if key == curses.KEY_UP and current_row > 0:
-            current_row -= 1
-        elif key == curses.KEY_DOWN and current_row < len(menu) - 1:
-            current_row += 1
-        elif key == curses.KEY_ENTER or key in [10, 13]:
-            if current_row == len(menu) - 1:  # 返回主菜单
-                break
-            elif current_row == 0:  # 配置防火墙
-                configure_firewall()
-            elif current_row == 1:  # 查看防火墙策略
-                stdscr.clear()
-                policies = view_policies()
-                stdscr.addstr(0, 0, policies)
-                stdscr.refresh()
-                stdscr.getch()
-
-        stdscr.refresh()
-
-def main_menu(stdscr):
-    """显示主菜单。"""
-    curses.curs_set(0)
-    current_row = 0
-
+def main_menu():
+    """主菜单。"""
     while True:
-        stdscr.clear()
-        stdscr.addstr(0, 0, "防火墙和 iptables 控制面板", curses.A_BOLD)
+        print("\n=== 防火墙和 iptables 控制面板 ===")
         status = "firewall" if check_firewall_status() else "iptables"
-        stdscr.addstr(1, 0, f"当前生效策略: {status}", curses.A_BOLD)
-
-        menu = [
-            "iptables 操作" if not check_firewall_status() else None,
-            "firewall 操作",
-            "查看当前策略",
-            "退出",
-        ]
-        menu = [item for item in menu if item]
-
-        for idx, row in enumerate(menu):
-            x = 0
-            y = idx + 2
-            if idx == current_row:
-                stdscr.addstr(y, x, row, curses.color_pair(1))
-            else:
-                stdscr.addstr(y, x, row)
-
-        key = stdscr.getch()
-
-        if key == curses.KEY_UP and current_row > 0:
-            current_row -= 1
-        elif key == curses.KEY_DOWN and current_row < len(menu) - 1:
-            current_row += 1
-        elif key == curses.KEY_ENTER or key in [10, 13]:
-            if current_row == len(menu) - 1:  # 退出
-                break
-            elif menu[current_row] == "iptables 操作":
-                curses.wrapper(iptables_menu)
-            elif menu[current_row] == "firewall 操作":
-                curses.wrapper(firewall_menu)
-            elif menu[current_row] == "查看当前策略":
-                policies = view_policies()
-                stdscr.clear()
-                stdscr.addstr(0, 0, policies)
-                stdscr.refresh()
-                stdscr.getch()
-
-        stdscr.refresh()
+        print(f"当前生效策略: {status}")
+        print("1. iptables 操作" if not check_firewall_status() else "", end="")
+        print("\n2. firewall 操作")
+        print("3. 查看当前策略")
+        print("4. 退出")
+        choice = input("请选择操作：")
+        if choice == "1" and not check_firewall_status():
+            iptables_menu()
+        elif choice == "2":
+            firewall_menu()
+        elif choice == "3":
+            view_policies()
+        elif choice == "4":
+            print("程序已退出。")
+            break
+        else:
+            print("无效的选择，请重试！")
 
 if __name__ == "__main__":
-    curses.wrapper(main_menu)
+    main_menu()
